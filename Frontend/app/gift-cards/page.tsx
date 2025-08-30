@@ -31,7 +31,7 @@ const GiftCardsPage = () => {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/email/gift-card`,
+        "/api/email/gift-card",
         {
           method: "POST",
           headers: {

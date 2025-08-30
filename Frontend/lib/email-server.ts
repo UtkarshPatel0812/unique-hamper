@@ -1,5 +1,4 @@
-const nodemailer = require("nodemailer");
-require("dotenv").config();
+import nodemailer from "nodemailer";
 
 // Config constants
 const EMAIL_CONFIG = {
@@ -16,16 +15,14 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@shreeganeshcollections.com
 const COMPANY_NAME = process.env.COMPANY_NAME || "Shree Ganesh Collections";
 const COMPANY_EMAIL = process.env.COMPANY_EMAIL || "info@shreeganeshcollections.com";
 const COMPANY_PHONE = process.env.COMPANY_PHONE || "+91 98765 43210";
-const COMPANY_ADDRESS =
-  process.env.COMPANY_ADDRESS || "Shop No. 15, MG Road, Mumbai, Maharashtra 400001";
-const SITE_URL =
-  process.env.SITE_URL || "https://shreeganeshcollections.com";
+const COMPANY_ADDRESS = process.env.COMPANY_ADDRESS || "Shop No. 15, MG Road, Mumbai, Maharashtra 400001";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shreeganeshcollections.com";
 
 // Create transporter
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
 
 // Responsive email template with luxury design
-function createEmailTemplate(content, title) {
+function createEmailTemplate(content: string, title: string) {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -530,12 +527,13 @@ function createEmailTemplate(content, title) {
 }
 
 // Send dual emails
-async function sendDualEmails(
-  to,
-  subjectAdmin,
-  contentAdmin,
-  subjectUser,
-  contentUser
+export async function sendDualEmails(
+  to: string,
+  subjectAdmin: string,
+  contentAdmin: string,
+  subjectUser: string,
+  contentUser: string,
+  adminEmailOverride?: string
 ) {
   try {
     const htmlAdmin = createEmailTemplate(contentAdmin, subjectAdmin);
@@ -544,7 +542,7 @@ async function sendDualEmails(
     // Send to admin
     await transporter.sendMail({
       from: `"${COMPANY_NAME}" <${EMAIL_CONFIG.auth.user}>`,
-      to: ADMIN_EMAIL,
+      to: adminEmailOverride || ADMIN_EMAIL,
       subject: subjectAdmin,
       html: htmlAdmin,
     });
@@ -558,13 +556,10 @@ async function sendDualEmails(
     });
 
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Email send error:", error);
     return { success: false, error };
   }
 }
 
-module.exports = {
-  sendDualEmails,
-  createEmailTemplate,
-};
+export { createEmailTemplate };

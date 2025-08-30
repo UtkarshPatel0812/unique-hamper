@@ -1,18 +1,14 @@
-const express = require("express");
-const router = express.Router();
-const { sendDualEmails } = require("../utils/sendEmail");
+import { NextRequest, NextResponse } from 'next/server';
+import { sendDualEmails } from '@/lib/email-server';
 
 const COMPANY_NAME = process.env.COMPANY_NAME || "Shree Ganesh Collections";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@shreeganeshcollections.com";
-const SITE_URL = process.env.SITE_URL || "https://shreeganeshcollections.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shreeganeshcollections.com";
 
-router.post("/", async (req, res) => {
+export async function POST(request: NextRequest) {
   try {
-    const { email } = req.body;
+    const { email } = await request.json();
 
-    const today = new Date().toLocaleDateString();
-
-    // Admin email content with enhanced styling
     const adminContent = `
       <div class="content-title">📧 New Newsletter Subscription</div>
       <div class="content-text">A new customer has joined our newsletter community.</div>
@@ -41,7 +37,6 @@ router.post("/", async (req, res) => {
       </div>
 `;
 
-    // Welcome email content with enhanced styling
     const welcomeContent = `
       <div class="content-title">🌟 Welcome to Our Exclusive Community!</div>
       <div class="content-text">
@@ -96,21 +91,22 @@ router.post("/", async (req, res) => {
     );
 
     if (result.success) {
-      return res.json({
+      return NextResponse.json({
         success: true,
         message: "Newsletter subscription email sent successfully",
       });
     } else {
       throw new Error("Failed to send one or more emails");
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Newsletter Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to send newsletter email",
-      error: error.message,
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to send newsletter email",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
-});
-
-module.exports = router;
+}

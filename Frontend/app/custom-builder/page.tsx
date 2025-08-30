@@ -118,7 +118,7 @@ const CustomBuilderPage = () => {
       };
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/email/custom-builder`,
+        "/api/email/custom-builder",
         {
           method: "POST",
           headers: {

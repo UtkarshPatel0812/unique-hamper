@@ -37,7 +37,7 @@ const ContactPage = () => {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/email/contact`,
+        "/api/email/contact",
         {
           method: "POST",
           headers: {

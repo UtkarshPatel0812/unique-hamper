@@ -1,15 +1,13 @@
-const express = require("express");
-const router = express.Router();
-const { sendDualEmails } = require("../utils/sendEmail");
+import { NextRequest, NextResponse } from 'next/server';
+import { sendDualEmails } from '@/lib/email-server';
 
 const COMPANY_NAME = process.env.COMPANY_NAME || "Shree Ganesh Collections";
-const SITE_URL = process.env.SITE_URL || "https://shreeganeshcollections.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shreeganeshcollections.com";
 
-router.post("/", async (req, res) => {
+export async function POST(request: NextRequest) {
   try {
-    const data = req.body;
+    const data = await request.json();
 
-    // Admin email content with enhanced styling
     const adminContent = `
       <div class="content-title">⚡ Priority Custom Builder Request</div>
       <div class="content-text">A new custom builder quote request has been submitted and requires immediate attention.</div>
@@ -38,10 +36,10 @@ router.post("/", async (req, res) => {
         <div class="field-label" style="margin-bottom: 15px; font-size: 16px;">🛒 Selected Items</div>
         ${data.selectedItems
           .map(
-            (item) => `
+            (item: any) => `
         <div class="field-row">
           <div class="field-label">${item.name}</div>
-          <div class="field-value">Qty: ${item.quantity} × $${item.price} = $${
+          <div class="field-value">Qty: ${item.quantity} × ₹${item.price} = ₹${
               item.price * item.quantity
             }</div>
         </div>
@@ -85,7 +83,7 @@ router.post("/", async (req, res) => {
         data.totalPrice
           ? `
       <div class="highlight-box">
-        <div class="highlight-title">💰 Estimated Total: $${data.totalPrice}</div>
+        <div class="highlight-title">💰 Estimated Total: ₹${data.totalPrice}</div>
         <div class="highlight-text">
           This is a preliminary estimate. Final pricing may vary based on customizations and material choices.
         </div>
@@ -102,7 +100,6 @@ router.post("/", async (req, res) => {
       </div>
 `;
 
-    // Customer email content with enhanced styling
     const customerContent = `
       <div class="content-title">🎨 Your Custom Creation Awaits!</div>
       <div class="content-text">
@@ -117,10 +114,10 @@ router.post("/", async (req, res) => {
         <div class="field-label" style="margin-bottom: 15px; font-size: 16px;">🛍️ Your Selected Items</div>
         ${data.selectedItems
           .map(
-            (item) => `
+            (item: any) => `
         <div class="field-row">
           <div class="field-label">${item.name}</div>
-          <div class="field-value">Qty: ${item.quantity} × $${item.price} = $${
+          <div class="field-value">Qty: ${item.quantity} × ₹${item.price} = ₹${
               item.price * item.quantity
             }</div>
         </div>
@@ -164,7 +161,7 @@ router.post("/", async (req, res) => {
         data.totalPrice
           ? `
       <div class="highlight-box">
-        <div class="highlight-title">💰 Estimated Total: $${data.totalPrice}</div>
+        <div class="highlight-title">💰 Estimated Total: ₹${data.totalPrice}</div>
         <div class="highlight-text">
           This is a preliminary estimate. Final pricing will be confirmed in your detailed quote.
         </div>
@@ -204,6 +201,7 @@ router.post("/", async (req, res) => {
       <div style="text-align: center;">
         <a href="${SITE_URL}" class="btn-primary">Visit Our Website</a>
       </div>`;
+
     const result = await sendDualEmails(
       data.customerEmail,
       `New Custom Builder Quote Request - ${COMPANY_NAME}`,
@@ -213,21 +211,22 @@ router.post("/", async (req, res) => {
     );
 
     if (result.success) {
-      return res.json({
+      return NextResponse.json({
         success: true,
         message: "Custom builder quote request emails sent successfully",
       });
     } else {
       throw new Error("Failed to send emails");
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error sending custom builder emails:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to send custom builder emails",
-      error: error.message,
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to send custom builder emails",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
-});
-
-module.exports = router;
+}

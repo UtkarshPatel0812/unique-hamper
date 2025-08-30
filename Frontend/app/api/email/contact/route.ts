@@ -1,15 +1,11 @@
-const express = require("express");
-const router = express.Router();
-const { sendDualEmails } = require("../utils/sendEmail");
+import { NextRequest, NextResponse } from 'next/server';
+import { sendDualEmails } from '@/lib/email-server';
 
 const COMPANY_NAME = process.env.COMPANY_NAME || "Shree Ganesh Collections";
-const COMPANY_EMAIL = process.env.CUSTOM_EMAIL || "custom@shreeganeshcollections.com";
-const COMPANY_PHONE = process.env.COMPANY_PHONE || "+91 98765 43210";
-const COMPANY_WHATSAPP = process.env.COMPANY_WHATSAPP || "+919876543210";
 
-router.post("/", async (req, res) => {
+export async function POST(request: NextRequest) {
   try {
-    const data = req.body;
+    const data = await request.json();
 
     const customerContent = `
       <div class="content-title">💌 Hi ${data.name}, we received your message!</div>
@@ -36,11 +32,10 @@ router.post("/", async (req, res) => {
         <div class="highlight-title">We'll be in touch soon!</div>
         <div class="highlight-text">
           Our team will review your message and respond within 24 hours. For urgent matters, 
-          feel free to <a href="mailto:${COMPANY_EMAIL}">contact us directly</a>.
+          feel free to <a href="mailto:${process.env.COMPANY_EMAIL}">contact us directly</a>.
         </div>
       </div>
 `;
-
 
     const adminContent = `
       <div class="content-title">📬 New Contact Submission</div>
@@ -85,7 +80,6 @@ router.post("/", async (req, res) => {
       </div>
 `;
 
-
     const result = await sendDualEmails(
       data.email,
       `New Contact Submission - ${COMPANY_NAME}`,
@@ -95,21 +89,22 @@ router.post("/", async (req, res) => {
     );
 
     if (result.success) {
-      return res.json({
+      return NextResponse.json({
         success: true,
         message: "Contact form emails sent successfully",
       });
     } else {
       throw new Error("Failed to send emails");
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error sending contact form emails:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to send contact form emails",
-      error: error.message,
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to send contact form emails",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
-});
-
-module.exports = router;
+}

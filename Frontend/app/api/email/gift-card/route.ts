@@ -1,16 +1,13 @@
-const express = require("express");
-const router = express.Router();
-const { sendDualEmails, createEmailTemplate } = require("../utils/sendEmail");
+import { NextRequest, NextResponse } from 'next/server';
+import { sendDualEmails } from '@/lib/email-server';
 
 const COMPANY_NAME = process.env.COMPANY_NAME || "Shree Ganesh Collections";
-const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "info@shreeganeshcollections.com";
-const SITE_URL = process.env.SITE_URL || "https://shreeganeshcollections.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shreeganeshcollections.com";
 
-router.post("/", async (req, res) => {
+export async function POST(request: NextRequest) {
   try {
-    const data = req.body;
-    const giftCardCode =
-      "LC" + Math.random().toString(36).substr(2, 9).toUpperCase();
+    const data = await request.json();
+    const giftCardCode = "LC" + Math.random().toString(36).substr(2, 9).toUpperCase();
 
     const adminEmailTemplate = `
       <div class="content-title">🎁 New Gift Card Purchase</div>
@@ -40,7 +37,7 @@ router.post("/", async (req, res) => {
         </div>
         <div class="field-row">
           <div class="field-label">Amount</div>
-          <div class="field-value">$${data.amount}</div>
+          <div class="field-value">₹${data.amount}</div>
         </div>
         <div class="field-row">
           <div class="field-label">Delivery Date</div>
@@ -55,7 +52,6 @@ router.post("/", async (req, res) => {
       </div>
     `;
 
-    // Email template for recipient
     const recipientEmailTemplate = `
       <div class="content-title">🎉 You've Received a Gift Card!</div>
       <div class="content-text">Dear ${data.recipientName},</div>
@@ -66,7 +62,7 @@ router.post("/", async (req, res) => {
       
       <div class="highlight-box" style="background: linear-gradient(135deg, #D4AF37 0%, #B8941F 100%); color: white; text-align: center;">
         <div style="font-size: 20px; font-weight: 700; margin-bottom: 10px;">🎁 DIGITAL GIFT CARD</div>
-        <div style="font-size: 32px; font-weight: 700; margin: 15px 0;">$${data.amount}</div>
+        <div style="font-size: 32px; font-weight: 700; margin: 15px 0;">₹${data.amount}</div>
         <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; font-size: 18px; font-weight: 700; letter-spacing: 2px; margin: 15px 0;">
           ${giftCardCode}
         </div>
@@ -121,7 +117,6 @@ router.post("/", async (req, res) => {
       </div>
     `;
 
-    // Email template for sender confirmation
     const senderEmailTemplate = `
       <div class="content-title">✅ Gift Card Sent Successfully!</div>
       <div class="content-text">Dear ${data.senderName},</div>
@@ -142,7 +137,7 @@ router.post("/", async (req, res) => {
         </div>
         <div class="field-row">
           <div class="field-label">Amount</div>
-          <div class="field-value">$${data.amount}</div>
+          <div class="field-value">₹${data.amount}</div>
         </div>
         <div class="field-row">
           <div class="field-label">Gift Card Code</div>
@@ -175,7 +170,7 @@ router.post("/", async (req, res) => {
 
     // Send to admin
     const adminResult = await sendDualEmails(
-      "admin@luxecollections.com",
+      process.env.ADMIN_EMAIL || "admin@shreeganeshcollections.com",
       `New Gift Card Purchase - ${COMPANY_NAME}`,
       adminEmailTemplate,
       `New Gift Card Purchase - ${COMPANY_NAME}`,
@@ -205,7 +200,7 @@ router.post("/", async (req, res) => {
     };
 
     if (result.success) {
-      return res.json({
+      return NextResponse.json({
         success: true,
         message: "Gift card emails sent successfully",
         giftCardCode,
@@ -213,14 +208,15 @@ router.post("/", async (req, res) => {
     } else {
       throw new Error("Failed to send one or more emails");
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gift Card Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to send gift card emails",
-      error: error.message,
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to send gift card emails",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
-});
-
-module.exports = router;
+}
